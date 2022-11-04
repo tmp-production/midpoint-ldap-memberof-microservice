@@ -12,14 +12,12 @@ import io.ktor.server.netty.*
 import io.ktor.server.plugins.contentnegotiation.*
 import io.ktor.server.request.*
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.Json
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
+import io.ktor.util.reflect.*
 import io.netty.handler.logging.LogLevel
-import kotlinx.serialization.json.JsonElement
-import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.*
 
 data class Midpoint(
     val host: String,
@@ -37,6 +35,9 @@ lateinit var midpoint: Midpoint
 
 @Serializable
 data class UserShadowsRequestInfo(val userId: String)
+
+@Serializable
+data class ShadowAddMemberOfRequestInfo(val userId: String, val newValue: String)
 
 /**
  * args:
@@ -66,7 +67,23 @@ fun main(args: Array<String>) {
             }
             get("/midpoint-user-shadows") {
                 val userInfo = call.receive<UserShadowsRequestInfo>()
-                println(userInfo)
+                (HttpClient(CIO)).use { client ->
+                    val response = client.get(userInfoEndPoint + "/${userInfo.userId}") {
+                        basicAuth(userName, password)
+                        accept(ContentType.Application.Json)
+                    }
+                    val user = Json.parseToJsonElement(response.bodyAsText()).jsonObject
+                    val shadowObjectsOrSingleShadowObject = user["user"]!!.jsonObject["linkRef"]!!
+                    val res = if (shadowObjectsOrSingleShadowObject is JsonArray) {
+                        shadowObjectsOrSingleShadowObject.jsonArray
+                    } else {
+                        JsonArray(listOf(shadowObjectsOrSingleShadowObject.jsonObject))
+                    }
+                    call.respond(res)
+                }
+            }
+            get("/midpoint-member-of") {
+
                 (HttpClient(CIO)).use { client ->
                     println("before request")
                     val response = client.get(userInfoEndPoint + "/${userInfo.userId}") {
@@ -74,10 +91,14 @@ fun main(args: Array<String>) {
                         accept(ContentType.Application.Json)
                     }
                     println("after request")
-                    val res = response.body<JsonObject>()
-                    val x = res["sdas"]!!
-                    x.jsonObject
-                    println(res)
+                    println(response.bodyAsText())
+                    val user = Json.parseToJsonElement(response.bodyAsText()).jsonObject
+                    val shadowObjectsOrSingleShadowObject = user["user"]!!.jsonObject["linkRef"]!!
+                    val res = if (shadowObjectsOrSingleShadowObject is JsonArray) {
+                        shadowObjectsOrSingleShadowObject.jsonArray
+                    } else {
+                        JsonArray(listOf(shadowObjectsOrSingleShadowObject.jsonObject))
+                    }
                     call.respond(res)
                 }
             }

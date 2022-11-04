@@ -32,6 +32,11 @@ dependencies {
     implementation("io.ktor:ktor-serialization-kotlinx-json:2.1.3")
 //    implementation("io.ktor:ktor-serialization-kotlinx-xml:2.1.3")
 
+    // ktor-client for making requests
+    implementation("io.ktor:ktor-client-core:2.1.3")
+    implementation("io.ktor:ktor-client-cio:2.1.3")
+    implementation("io.ktor:ktor-client-logging:2.1.3")
+
     testImplementation("io.ktor:ktor-server-tests-jvm:2.1.3")
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit:1.7.20")
 }

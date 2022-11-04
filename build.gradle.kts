@@ -1,7 +1,8 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
-    kotlin("jvm") version "1.7.0"
+    kotlin("jvm") version "1.7.20"
+    kotlin("plugin.serialization") version "1.7.20"
     application
 }
 
@@ -14,6 +15,25 @@ repositories {
 
 dependencies {
     testImplementation(kotlin("test"))
+
+//    implementation("org.apache.logging.log4j:log4j-api:2.19.0")
+//    implementation("org.apache.logging.log4j:log4j-core:2.19.0")
+
+    implementation("org.slf4j:slf4j-api:2.0.3")
+    implementation("org.slf4j:slf4j-simple:2.0.3")
+
+    implementation("io.ktor:ktor-server-core:2.1.3")
+    implementation("io.ktor:ktor-server-netty:2.1.3")
+
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.4.1")
+    implementation("io.ktor:ktor-server-content-negotiation:2.1.3")
+//    implementation("io.ktor:ktor-gson:2.1.3")
+//    implementation("io.ktor:ktor-gson:1.6.8")
+    implementation("io.ktor:ktor-serialization-kotlinx-json:2.1.3")
+//    implementation("io.ktor:ktor-serialization-kotlinx-xml:2.1.3")
+
+    testImplementation("io.ktor:ktor-server-tests-jvm:2.1.3")
+    testImplementation("org.jetbrains.kotlin:kotlin-test-junit:1.7.20")
 }
 
 tasks.test {

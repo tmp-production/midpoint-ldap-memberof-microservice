@@ -1,7 +1,6 @@
 package com.tmpproduction.ldapservice
 
 import io.ktor.client.*
-import io.ktor.client.call.*
 import io.ktor.client.engine.cio.*
 import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.application.*
@@ -16,7 +15,6 @@ import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
 import io.ktor.util.reflect.*
-import io.netty.handler.logging.LogLevel
 import kotlinx.serialization.json.*
 
 data class Midpoint(
@@ -26,10 +24,32 @@ data class Midpoint(
     val password: String
 )
 
-val userInfoEndPoint: String get() =
-    with(midpoint){
-        "http://${host}:${port}/midpoint/ws/rest/users"
+val midpointApiUrl: String by lazy {
+    with(midpoint) {
+        "http://${host}:${port}/midpoint/ws/rest"
     }
+}
+
+val usersEndPoint: String by lazy { "$midpointApiUrl/users" }
+
+val shadowsEndPoint: String by lazy { "$midpointApiUrl/shadows" }
+
+fun makeMemberOfPayload(newValue: String): String {
+    return """
+        <?xml version="1.0" encoding="UTF-8"?>
+        <objectModification
+          xmlns='http://midpoint.evolveum.com/xml/ns/public/common/api-types-3'
+          xmlns:c='http://midpoint.evolveum.com/xml/ns/public/common/common-3'
+          xmlns:t="http://prism.evolveum.com/xml/ns/public/types-3"
+          xmlns:ri="http://midpoint.evolveum.com/xml/ns/public/resource/instance-3">
+          <itemDelta>
+            <t:modificationType>replace</t:modificationType>
+              <t:path>c:attributes/ri:memberOf</t:path>
+              <t:value>${newValue}</t:value>
+          </itemDelta>
+        </objectModification>
+    """.trimIndent()
+}
 
 lateinit var midpoint: Midpoint
 
@@ -37,7 +57,7 @@ lateinit var midpoint: Midpoint
 data class UserShadowsRequestInfo(val userId: String)
 
 @Serializable
-data class ShadowAddMemberOfRequestInfo(val userId: String, val newValue: String)
+data class ShadowAddMemberOfRequestInfo(val shadowId: String, val newValue: String)
 
 /**
  * args:
@@ -68,7 +88,7 @@ fun main(args: Array<String>) {
             get("/midpoint-user-shadows") {
                 val userInfo = call.receive<UserShadowsRequestInfo>()
                 (HttpClient(CIO)).use { client ->
-                    val response = client.get(userInfoEndPoint + "/${userInfo.userId}") {
+                    val response = client.get(usersEndPoint + "/${userInfo.userId}") {
                         basicAuth(userName, password)
                         accept(ContentType.Application.Json)
                     }
@@ -83,23 +103,19 @@ fun main(args: Array<String>) {
                 }
             }
             get("/midpoint-member-of") {
-
+                val requestInfo = call.receive<ShadowAddMemberOfRequestInfo>()
                 (HttpClient(CIO)).use { client ->
-                    println("before request")
-                    val response = client.get(userInfoEndPoint + "/${userInfo.userId}") {
+                    val response = client.patch(shadowsEndPoint + "/${requestInfo.shadowId}") {
                         basicAuth(userName, password)
-                        accept(ContentType.Application.Json)
+                        contentType(ContentType.Application.Xml)
+                        setBody(makeMemberOfPayload(requestInfo.newValue))
                     }
-                    println("after request")
-                    println(response.bodyAsText())
-                    val user = Json.parseToJsonElement(response.bodyAsText()).jsonObject
-                    val shadowObjectsOrSingleShadowObject = user["user"]!!.jsonObject["linkRef"]!!
-                    val res = if (shadowObjectsOrSingleShadowObject is JsonArray) {
-                        shadowObjectsOrSingleShadowObject.jsonArray
+                    val res = response.bodyAsText()
+                    if (res.isBlank()) {
+                        call.respond("{\"result\": \"ok\"}")
                     } else {
-                        JsonArray(listOf(shadowObjectsOrSingleShadowObject.jsonObject))
+                        call.respond("{\"error\": \"${res}\"}")
                     }
-                    call.respond(res)
                 }
             }
         }

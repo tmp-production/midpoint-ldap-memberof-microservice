@@ -86,6 +86,7 @@ fun main(args: Array<String>) {
                 call.respondText("This is an ldap service")
             }
             get("/midpoint-user-shadows") {
+				// todo(Roman) some error-handling would be good
                 val userInfo = call.receive<UserShadowsRequestInfo>()
                 (HttpClient(CIO)).use { client ->
                     val response = client.get(usersEndPoint + "/${userInfo.userId}") {

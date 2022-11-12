@@ -60,5 +60,5 @@ tasks.withType<KotlinCompile> {
 }
 
 application {
-    mainClass.set("MainKt")
+    mainClass.set("com.tmpproduction.ldapservice.MainKt")
 }

@@ -1,5 +1,8 @@
 package com.tmpproduction.ldapservice
 
+import kotlinx.coroutines.runBlocking
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.json.Json
 import org.apache.kafka.clients.consumer.ConsumerConfig
 import org.apache.kafka.common.serialization.Serdes
 import org.apache.kafka.streams.KafkaStreams
@@ -35,7 +38,10 @@ object ConsumerDemo {
     }
 
     private fun handleMessage(message: String) {
-        println(message)
+        val requestInfo = Json.decodeFromString<ShadowAddMemberOfRequestInfo>(message)
+        runBlocking {
+            changeMemberOf(requestInfo)
+        }
     }
 
     @JvmStatic

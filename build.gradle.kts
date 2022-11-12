@@ -3,7 +3,17 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 plugins {
     kotlin("jvm") version "1.7.20"
     kotlin("plugin.serialization") version "1.7.20"
+    id("org.sonarqube") version "3.5.0.2730"
     application
+}
+
+sonarqube {
+    properties {
+        property("sonar.sourceEncoding", "UTF-8")
+        property("sonar.host.url", "https://sonarcloud.io")
+        property("sonar.organization", "tmp-production")
+        property("sonar.projectKey", "tmp-production_ldap-users-service-prototype")
+    }
 }
 
 group = "com.tmp-production.ldapservice"

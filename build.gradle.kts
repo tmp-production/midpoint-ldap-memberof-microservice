@@ -48,7 +48,7 @@ dependencies {
     implementation("io.ktor:ktor-client-logging:2.1.3")
 
     testImplementation("io.ktor:ktor-server-tests-jvm:2.1.3")
-    testImplementation("org.jetbrains.kotlin:kotlin-test-junit:1.7.20")
+//    testImplementation("org.jetbrains.kotlin:kotlin-test-junit:1.7.20")
 }
 
 tasks.test {

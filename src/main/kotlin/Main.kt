@@ -14,7 +14,6 @@ import kotlinx.serialization.Serializable
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
-import io.ktor.util.reflect.*
 import kotlinx.serialization.json.*
 
 data class Midpoint(
@@ -86,39 +85,57 @@ fun main(args: Array<String>) {
                 call.respondText("This is an ldap service")
             }
             get("/midpoint-user-shadows") {
-				// todo(Roman) some error-handling would be good
                 val userInfo = call.receive<UserShadowsRequestInfo>()
-                (HttpClient(CIO)).use { client ->
-                    val response = client.get(usersEndPoint + "/${userInfo.userId}") {
-                        basicAuth(userName, password)
-                        accept(ContentType.Application.Json)
-                    }
-                    val user = Json.parseToJsonElement(response.bodyAsText()).jsonObject
-                    val shadowObjectsOrSingleShadowObject = user["user"]!!.jsonObject["linkRef"]!!
-                    val res = if (shadowObjectsOrSingleShadowObject is JsonArray) {
-                        shadowObjectsOrSingleShadowObject.jsonArray
-                    } else {
-                        JsonArray(listOf(shadowObjectsOrSingleShadowObject.jsonObject))
-                    }
-                    call.respond(res)
-                }
+                call.respond(getUserShadows(userInfo))
             }
-            get("/midpoint-member-of") {
+            patch("/midpoint-member-of") {
                 val requestInfo = call.receive<ShadowAddMemberOfRequestInfo>()
-                (HttpClient(CIO)).use { client ->
-                    val response = client.patch(shadowsEndPoint + "/${requestInfo.shadowId}") {
-                        basicAuth(userName, password)
-                        contentType(ContentType.Application.Xml)
-                        setBody(makeMemberOfPayload(requestInfo.newValue))
-                    }
-                    val res = response.bodyAsText()
-                    if (res.isBlank()) {
-                        call.respond("{\"result\": \"ok\"}")
-                    } else {
-                        call.respond("{\"error\": \"${res}\"}")
-                    }
-                }
+                call.respond(changeMemberOf(requestInfo))
             }
         }
     }.start(wait = true)
+}
+
+/**
+ * @return list of user shadows ids
+ */
+suspend fun getUserShadows(userInfo: UserShadowsRequestInfo): List<String> {
+    (HttpClient(CIO)).use { client ->
+        val response = client.get(usersEndPoint + "/${userInfo.userId}") {
+            with(midpoint) {
+                basicAuth(userName, password)
+            }
+            accept(ContentType.Application.Json)
+        }
+        val user = Json.parseToJsonElement(response.bodyAsText()).jsonObject
+        val shadowObjectsOrSingleShadowObject = user["user"]!!.jsonObject["linkRef"]!!
+        val res = if (shadowObjectsOrSingleShadowObject is JsonArray) {
+            shadowObjectsOrSingleShadowObject.jsonArray
+        } else {
+            JsonArray(listOf(shadowObjectsOrSingleShadowObject.jsonObject))
+        }
+        // todo(Roman) warn if something inside is not string
+        return res.filterIsInstance(String::class.java)
+    }
+}
+
+/**
+ * @return response. if error, return error
+ */
+suspend fun changeMemberOf(requestInfo: ShadowAddMemberOfRequestInfo): String {
+    (HttpClient(CIO)).use { client ->
+        val response = client.patch(shadowsEndPoint + "/${requestInfo.shadowId}") {
+            with(midpoint) {
+                basicAuth(userName, password)
+            }
+            contentType(ContentType.Application.Xml)
+            setBody(makeMemberOfPayload(requestInfo.newValue))
+        }
+        val res = response.bodyAsText()
+        if (res.isBlank()) {
+            return "{\"result\": \"ok\"}"
+        } else {
+            return "{\"error\": \"${res}\"}"
+        }
+    }
 }

@@ -38,6 +38,8 @@ object ConsumerDemo {
     }
 
     private fun handleMessage(message: String) {
+        println("New message: '$message'")
+
         val requestInfo = Json.decodeFromString<ShadowAddMemberOfRequestInfo>(message)
         runBlocking {
             changeMemberOf(requestInfo)

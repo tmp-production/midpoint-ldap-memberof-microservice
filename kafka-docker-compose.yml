@@ -24,10 +24,11 @@ services:
     image: confluentinc/cp-kafka:latest
     depends_on:
       - kafka
-    entrypoint: ['/bin/sh', '-c']
+    entrypoint: [ '/bin/sh', '-c' ]
     command: |
       "
       # Blocks until Kafka is reachable
       kafka-topics --bootstrap-server kafka:29092 --list
-      kafka-topics --bootstrap-server kafka:29092 --create --if-not-exists --topic streams-plaintext-input --replication-factor 1 --partitions 1
+      kafka-topics --bootstrap-server kafka:29092 --create --if-not-exists --topic requests-input  --replication-factor 1 --partitions 1
+      kafka-topics --bootstrap-server kafka:29092 --create --if-not-exists --topic requests-output --replication-factor 1 --partitions 1
       "

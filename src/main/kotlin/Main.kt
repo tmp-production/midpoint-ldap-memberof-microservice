@@ -1,5 +1,3 @@
-package com.tmpproduction.ldapservice
-
 import io.ktor.client.*
 import io.ktor.client.engine.cio.*
 import io.ktor.serialization.kotlinx.json.*

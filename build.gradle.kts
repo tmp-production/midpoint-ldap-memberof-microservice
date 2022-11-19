@@ -61,6 +61,8 @@ dependencies {
     implementation("io.ktor:ktor-client-cio:2.1.3")
     implementation("io.ktor:ktor-client-logging:2.1.3")
 
+    implementation("org.apache.kafka:kafka-streams:3.3.1")
+
     testImplementation(kotlin("test"))
 }
 

@@ -12,6 +12,7 @@ import kotlinx.serialization.Serializable
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
+import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.*
 
 data class Midpoint(
@@ -140,8 +141,16 @@ suspend fun getMidpointUserByFullName(fullName: String): OID? {
             accept(ContentType.Application.Json)
             setBody(makeQueryAllUsersPayload())
         }
-        val users = Json.parseToJsonElement(response.bodyAsText())
-            .jsonObject["object"]!!.jsonObject["object"]!!.jsonArray
+        val users = try{
+            Json.parseToJsonElement(response.bodyAsText())
+                .jsonObject["object"]!!.jsonObject["object"]!!.jsonArray
+        } catch (e: SerializationException) {
+            throw RuntimeException("Midpoint user list response is not json", e)
+        } catch (e: IllegalArgumentException) {
+            throw RuntimeException("Wrong json structure when parsing users midpoint response", e)
+        } catch (e: Exception) {
+            throw RuntimeException("Unknown error when parsing midpoint users response", e)
+        }
         val usersFullNamesToOID: List<Pair<String?, OID>> = users.map { it.jsonObject }.map {
             it["fullName"]?.jsonPrimitive?.contentOrNull to it["oid"]!!.jsonPrimitive.content
         }
@@ -153,26 +162,34 @@ suspend fun getMidpointUserByFullName(fullName: String): OID? {
  * @return list of user shadows ids
  */
 suspend fun getUserShadows(userInfo: UserShadowsRequestInfo): List<String> {
-    (HttpClient(CIO)).use { client ->
-        val response = client.get(usersEndPoint + "/${userInfo.userId}") {
-            with(midpoint) {
-                basicAuth(userName, password)
+    try {
+        (HttpClient(CIO)).use { client ->
+            val response = client.get(usersEndPoint + "/${userInfo.userId}") {
+                with(midpoint) {
+                    basicAuth(userName, password)
+                }
+                accept(ContentType.Application.Json)
             }
-            accept(ContentType.Application.Json)
+            val user = Json.parseToJsonElement(response.bodyAsText()).jsonObject
+            val userKey = "user"
+            if (!user.containsKey(userKey)) {
+                throw IllegalArgumentException(response.bodyAsText())
+            }
+            val shadowObjectsOrSingleShadowObject = user["user"]!!.jsonObject["linkRef"]!!
+            val res = if (shadowObjectsOrSingleShadowObject is JsonArray) {
+                shadowObjectsOrSingleShadowObject.jsonArray
+            } else {
+                JsonArray(listOf(shadowObjectsOrSingleShadowObject.jsonObject))
+            }
+            // todo(Roman) warn if something inside is not string
+            return res.jsonArray.map { it.jsonObject["oid"]!!.jsonPrimitive.content }
         }
-        val user = Json.parseToJsonElement(response.bodyAsText()).jsonObject
-        val userKey = "user"
-        if (!user.containsKey(userKey)) {
-            throw IllegalArgumentException(response.bodyAsText())
-        }
-        val shadowObjectsOrSingleShadowObject = user["user"]!!.jsonObject["linkRef"]!!
-        val res = if (shadowObjectsOrSingleShadowObject is JsonArray) {
-            shadowObjectsOrSingleShadowObject.jsonArray
-        } else {
-            JsonArray(listOf(shadowObjectsOrSingleShadowObject.jsonObject))
-        }
-        // todo(Roman) warn if something inside is not string
-        return res.jsonArray.map { it.jsonObject["oid"]!!.jsonPrimitive.content }
+    } catch (e: SerializationException) {
+        throw RuntimeException("Midpoint user-shadow response is not json", e)
+    } catch (e: IllegalArgumentException) {
+        throw RuntimeException("Midpoint user-shadow response has unexpected structure", e)
+    } catch (e: Exception) {
+        throw RuntimeException("Unknown error processing midpoint user-shadow response", e)
     }
 }
 
@@ -180,56 +197,72 @@ suspend fun getUserShadows(userInfo: UserShadowsRequestInfo): List<String> {
  * @return response. if error, return error
  */
 suspend fun changeMemberOf(requestInfo: ShadowAddMemberOfRequestInfo): String {
-    (HttpClient(CIO)).use { client ->
-        val response = client.patch(shadowsEndPoint + "/${requestInfo.shadowId}") {
-            with(midpoint) {
-                basicAuth(userName, password)
+    try {
+        (HttpClient(CIO)).use { client ->
+            val response = client.patch(shadowsEndPoint + "/${requestInfo.shadowId}") {
+                with(midpoint) {
+                    basicAuth(userName, password)
+                }
+                contentType(ContentType.Application.Xml)
+                setBody(makeMemberOfPayload(requestInfo.newValue))
             }
-            contentType(ContentType.Application.Xml)
-            setBody(makeMemberOfPayload(requestInfo.newValue))
+            val res = response.bodyAsText()
+            if (res.isBlank()) {
+                return "{\"result\": \"ok\"}"
+            } else {
+                return "{\"error\": \"${res}\"}"
+            }
         }
-        val res = response.bodyAsText()
-        if (res.isBlank()) {
-            return "{\"result\": \"ok\"}"
-        } else {
-            return "{\"error\": \"${res}\"}"
-        }
+    } catch (e: Exception) {
+        throw RuntimeException("Unknown error sending member-of request", e)
     }
 }
 
 private suspend fun getShadowResourceOID(shadowOID: OID): OID {
-    val url = shadowsEndPoint + "/${shadowOID}"
-    // todo(Roman B) error handling
-    (HttpClient(CIO)).use { client ->
-        val response = client.get(url) {
-            with(midpoint) {
-                basicAuth(userName, password)
+    try {
+        (HttpClient(CIO)).use { client ->
+            val response = client.get(shadowsEndPoint + "/${shadowOID}") {
+                with(midpoint) {
+                    basicAuth(userName, password)
+                }
+                accept(ContentType.Application.Json)
             }
-            accept(ContentType.Application.Json)
+            val shadowObject = Json.parseToJsonElement(response.bodyAsText())
+            return shadowObject.jsonObject["shadow"]!!
+                .jsonObject["resourceRef"]!!
+                .jsonObject["oid"]!!
+                .jsonPrimitive.content
         }
-        val shadowObject = Json.parseToJsonElement(response.bodyAsText())
-        return shadowObject.jsonObject["shadow"]!!
-            .jsonObject["resourceRef"]!!
-            .jsonObject["oid"]!!
-            .jsonPrimitive.content
+    } catch (e: SerializationException) {
+        throw RuntimeException("Midpoint shadow-resource-oid response is not json", e)
+    } catch (e: IllegalArgumentException) {
+        throw RuntimeException("Midpoint shadow-resource-oid response has unexpected structure", e)
+    } catch (e: Exception) {
+        throw RuntimeException("Unknown error processing midpoint shadow-resource-oid response", e)
     }
 }
 
 suspend fun getResourceName(resource: OID): String {
-    val url = resourcesEndPoint + "/${resource}"
-    // todo(Roman B) error handling
-    (HttpClient(CIO)).use { client ->
-        // Todo(Roman B) repetition
-        val response = client.get(url) {
-            with(midpoint) {
-                basicAuth(userName, password)
+    try {
+        (HttpClient(CIO)).use { client ->
+            // Todo(Roman B) repetition
+            val response = client.get(resourcesEndPoint + "/${resource}") {
+                with(midpoint) {
+                    basicAuth(userName, password)
+                }
+                accept(ContentType.Application.Json)
             }
-            accept(ContentType.Application.Json)
+            val resourceObject = Json.parseToJsonElement(response.bodyAsText())
+            return resourceObject.jsonObject["resource"]!!
+                .jsonObject["name"]!!
+                .jsonPrimitive.content
         }
-        val resourceObject = Json.parseToJsonElement(response.bodyAsText())
-        return resourceObject.jsonObject["resource"]!!
-            .jsonObject["name"]!!
-            .jsonPrimitive.content
+    } catch (e: SerializationException) {
+        throw RuntimeException("Midpoint resource-name response is not json", e)
+    } catch (e: IllegalArgumentException) {
+        throw RuntimeException("Midpoint resource-name response has unexpected structure", e)
+    } catch (e: Exception) {
+        throw RuntimeException("Unknown error processing midpoint resource-name response", e)
     }
 }
 

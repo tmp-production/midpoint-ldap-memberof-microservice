@@ -1,4 +1,4 @@
-package ru.nsu.fit.ldap.impl
+package com.tmpproduction.ldapservice.impl
 
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.Serializable
@@ -13,8 +13,8 @@ import org.apache.kafka.common.serialization.StringSerializer
 import org.apache.kafka.streams.KafkaStreams
 import org.apache.kafka.streams.StreamsBuilder
 import org.apache.kafka.streams.StreamsConfig
-import ru.nsu.fit.ldap.MidpointRepository
-import ru.nsu.fit.ldap.RequestsProviderService
+import com.tmpproduction.ldapservice.MidpointRepository
+import com.tmpproduction.ldapservice.RequestsProviderService
 import java.util.*
 import java.util.concurrent.CountDownLatch
 import kotlin.system.exitProcess

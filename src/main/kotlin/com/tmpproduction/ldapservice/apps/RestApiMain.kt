@@ -1,8 +1,8 @@
-package ru.nsu.fit.ldap.apps
+package com.tmpproduction.ldapservice.apps
 
-import ru.nsu.fit.ldap.MemberOfService
-import ru.nsu.fit.ldap.impl.RemoteMidpointRepository
-import ru.nsu.fit.ldap.impl.RestApiProviderService
+import com.tmpproduction.ldapservice.MemberOfService
+import com.tmpproduction.ldapservice.impl.RemoteMidpointRepository
+import com.tmpproduction.ldapservice.impl.RestApiProviderService
 
 /**
  * args:

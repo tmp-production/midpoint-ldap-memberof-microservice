@@ -1,4 +1,4 @@
-package ru.nsu.fit.ldap.impl
+package com.tmpproduction.ldapservice.impl
 
 import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.application.*
@@ -10,9 +10,9 @@ import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
-import ru.nsu.fit.ldap.MidpointRepository
-import ru.nsu.fit.ldap.OID
-import ru.nsu.fit.ldap.RequestsProviderService
+import com.tmpproduction.ldapservice.MidpointRepository
+import com.tmpproduction.ldapservice.OID
+import com.tmpproduction.ldapservice.RequestsProviderService
 
 @Serializable
 private data class UserShadowsRequestInfo(val userId: String)

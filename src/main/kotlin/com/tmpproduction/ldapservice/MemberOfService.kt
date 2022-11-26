@@ -1,4 +1,4 @@
-package ru.nsu.fit.ldap
+package com.tmpproduction.ldapservice
 
 typealias OID = String
 

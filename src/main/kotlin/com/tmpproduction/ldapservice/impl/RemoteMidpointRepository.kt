@@ -1,4 +1,4 @@
-package ru.nsu.fit.ldap.impl
+package com.tmpproduction.ldapservice.impl
 
 import io.ktor.client.*
 import io.ktor.client.engine.cio.*
@@ -6,8 +6,8 @@ import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
 import kotlinx.serialization.json.*
-import ru.nsu.fit.ldap.MidpointRepository
-import ru.nsu.fit.ldap.OID
+import com.tmpproduction.ldapservice.MidpointRepository
+import com.tmpproduction.ldapservice.OID
 
 class RemoteMidpointRepository(
     private val host: String,

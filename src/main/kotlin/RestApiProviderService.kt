@@ -6,7 +6,20 @@ import io.ktor.server.plugins.contentnegotiation.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
+import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
+
+@Serializable
+private data class UserShadowsRequestInfo(val userId: String)
+
+@Serializable
+private data class ShadowAddMemberOfRequestInfo(val shadowId: String, val newValue: String)
+
+@Serializable
+private data class ShadowOIDRequestInfo(val shadowOID: OID)
+
+@Serializable
+private data class MidpointUserByFullNameRequestInfo(val fullName: String)
 
 class RestApiProviderService(private val port: Int) : RequestsProviderService {
 

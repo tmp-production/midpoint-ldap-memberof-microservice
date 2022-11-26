@@ -1,4 +1,5 @@
 import kotlinx.coroutines.runBlocking
+import kotlinx.serialization.Serializable
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import org.apache.kafka.clients.consumer.ConsumerConfig
@@ -13,6 +14,9 @@ import org.apache.kafka.streams.StreamsConfig
 import java.util.*
 import java.util.concurrent.CountDownLatch
 import kotlin.system.exitProcess
+
+@Serializable
+private data class KafkaMessageModel(val name: String, val newGroup: String)
 
 class KafkaProviderService(
     private val kafkaHost: String,

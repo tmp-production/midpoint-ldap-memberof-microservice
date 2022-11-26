@@ -62,6 +62,7 @@ dependencies {
     implementation("io.ktor:ktor-client-logging:2.1.3")
 
     implementation("org.apache.kafka:kafka-streams:3.3.1")
+    implementation("org.junit.jupiter:junit-jupiter:5.8.1")
 
     testImplementation(kotlin("test"))
 }
@@ -71,5 +72,5 @@ tasks.withType<KotlinCompile> {
 }
 
 application {
-    mainClass.set("com.tmpproduction.ldapservice.MainKt")
+    mainClass.set("com.tmpproduction.ldapservice.apps.KafkaMain")
 }

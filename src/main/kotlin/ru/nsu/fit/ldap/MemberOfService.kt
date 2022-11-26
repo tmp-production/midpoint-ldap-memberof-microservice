@@ -1,3 +1,5 @@
+package ru.nsu.fit.ldap
+
 typealias OID = String
 
 class AuthenticationError(msg: String) : RuntimeException(msg)
@@ -27,7 +29,7 @@ interface MidpointRepository {
 }
 
 /**
- * A service which handles requests in any form and uses MemberOfService
+ * A service which handles requests in any form and uses ru.nsu.fit.ldap.MemberOfService
  * to respond to them
  */
 interface RequestsProviderService {

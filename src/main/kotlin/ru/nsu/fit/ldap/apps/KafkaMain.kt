@@ -1,3 +1,8 @@
+package ru.nsu.fit.ldap.apps
+
+import ru.nsu.fit.ldap.MemberOfService
+import ru.nsu.fit.ldap.impl.KafkaProviderService
+import ru.nsu.fit.ldap.impl.RemoteMidpointRepository
 
 /**
  * args:

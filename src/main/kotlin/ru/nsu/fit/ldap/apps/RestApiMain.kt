@@ -1,3 +1,9 @@
+package ru.nsu.fit.ldap.apps
+
+import ru.nsu.fit.ldap.MemberOfService
+import ru.nsu.fit.ldap.impl.RemoteMidpointRepository
+import ru.nsu.fit.ldap.impl.RestApiProviderService
+
 /**
  * args:
  *  - port on which to listen

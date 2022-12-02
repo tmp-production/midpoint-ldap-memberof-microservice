@@ -32,3 +32,10 @@ services:
       kafka-topics --bootstrap-server kafka:29092 --create --if-not-exists --topic requests-input  --replication-factor 1 --partitions 1
       kafka-topics --bootstrap-server kafka:29092 --create --if-not-exists --topic requests-output --replication-factor 1 --partitions 1
       "
+
+  ldap:
+    image: ldap:latest
+    entrypoint: [ '/root/bin/app' ]
+    depends_on:
+      - kafka
+    command: ["9999", "80.89.203.177", "312",  "administrator",  "5ecr3t"]

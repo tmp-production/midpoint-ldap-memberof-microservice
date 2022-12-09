@@ -4,7 +4,10 @@ services:
     environment:
       ZOOKEEPER_CLIENT_PORT: 2181
       ZOOKEEPER_TICK_TIME: 2000
-  
+    networks:
+      net_docker:
+        ipv4_address: 10.5.0.5
+
   kafka:
     image: confluentinc/cp-kafka:latest
     depends_on:
@@ -19,6 +22,9 @@ services:
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+    networks:
+      net_docker:
+        ipv4_address: 10.5.0.6
 
   tmp_kafka:
     image: confluentinc/cp-kafka:latest
@@ -32,10 +38,126 @@ services:
       kafka-topics --bootstrap-server kafka:29092 --create --if-not-exists --topic requests-input  --replication-factor 1 --partitions 1
       kafka-topics --bootstrap-server kafka:29092 --create --if-not-exists --topic requests-output --replication-factor 1 --partitions 1
       "
+    networks:
+      net_docker:
+        ipv4_address: 10.5.0.7
 
   ldap:
     image: ldap:latest
     entrypoint: [ '/root/bin/app' ]
     depends_on:
       - kafka
-    command: ["9999", "80.89.203.177", "312",  "administrator",  "5ecr3t"]
+    command: ["10.5.0.6", "9092", "312",  "administrator",  "5ecr3t"]
+    networks:
+      net_docker:
+        ipv4_address: 10.5.0.8
+
+
+  postgresql-midpoint:
+    image: postgres:13-alpine
+    container_name: book-postgresql-midpoint-chapter-2
+    environment:
+      - POSTGRES_PASSWORD_FILE=/run/secrets/mp_database_password.txt
+      - POSTGRES_USER=midpoint
+      - POSTGRES_INITDB_ARGS=--lc-collate=en_US.utf8 --lc-ctype=en_US.utf8
+    ports:
+      - 5432:5432
+    networks:
+      net_docker:
+        ipv4_address: 10.5.0.9
+    secrets:
+      - mp_database_password.txt
+    volumes:
+      - pg-midpoint_data:/var/lib/postgresql/data
+
+  postgresql-crm:
+    image: postgres:13-alpine
+    container_name: book-postgresql-crm-chapter-2
+    environment:
+      - POSTGRES_PASSWORD=qwe123
+      - POSTGRES_USER=crm
+      - POSTGRES_INITDB_ARGS=--lc-collate=en_US.utf8 --lc-ctype=en_US.utf8
+    ports:
+      - 15432:5432
+    networks:
+      net_docker:
+        ipv4_address: 10.5.0.10
+    volumes:
+      - pg-crm_data:/var/lib/postgresql/data
+      - ./book-chapter-common/container-book-postgres-crm_files:/docker-entrypoint-initdb.d/:ro
+
+  ad:
+    image: sonohara/samba4-ad-dc
+    container_name: book-ldap-chapter-2
+    privileged: true
+    networks:
+      net_docker:
+        ipv4_address: 10.5.0.11
+    ports:
+      - "389:389"
+    environment:
+      - DOCKER_DEBUG=1
+      - DNS_FORWARD=8.8.8.8
+      - DNS_DOMAIN=sambaad.local
+      - AD_PASSWORD=PASS0rd123
+      - AD_REALM=sambaad.local
+      - AD_DOMAIN=SAMBAAD
+
+  midpoint:
+    image: evolveum/midpoint:${MP_VERSION:-4.4}-alpine
+#    image: sakazuki/midpoint:arm64
+    container_name: book-midpoint-chapter-2
+    ports:
+      - "8080:8080"
+    environment:
+      - MP_ENTRY_POINT=/opt/midpoint-dirs-docker-entrypoint
+      - REPO_DATABASE_TYPE=postgresql
+      - REPO_HOST=book-postgresql-midpoint-chapter-2
+      - REPO_DATABASE=midpoint
+      - REPO_USER=midpoint
+      - REPO_PASSWORD_FILE=/run/secrets/mp_database_password.txt
+      - MP_KEYSTORE_PASSWORD_FILE=/run/secrets/mp_keystore_password.txt
+    networks:
+      net_docker:
+        ipv4_address: 10.5.0.12
+    secrets:
+      - mp_database_password.txt
+      - mp_keystore_password.txt
+    volumes:
+      - midpoint_home:/opt/midpoint/var
+      - ./container-book-midpoint_files:/opt/midpoint-dirs-docker-entrypoint/:ro
+    depends_on:
+      - postgresql-crm
+      - postgresql-midpoint
+
+
+networks:
+  net_docker:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 10.5.0.0/16
+          gateway: 10.5.0.1
+
+#networks:
+#  net:
+#    driver: bridge
+
+secrets:
+  mp_database_password.txt:
+    file: ./database_password.txt
+  mp_keystore_password.txt:
+    file: ./keystore_password.txt
+
+volumes:
+  midpoint_home:
+    name: book-midpoint_home-chapter-2
+  ldap_conf:
+    name: book-ldap_conf-chapter-2
+  ldap_data:
+    name: book-ldap_data-chapter-2
+  pg-midpoint_data:
+    name: book-postgresql-midpoint_data-chapter-2
+  pg-crm_data:
+    name: book-postgresql-crm_data-chapter-2
+

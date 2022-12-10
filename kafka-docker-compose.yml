@@ -14,11 +14,12 @@ services:
       - zookeeper
     ports:
       - 9092:9092
+      - 29092:29092
     environment:
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_INTERNAL:PLAINTEXT
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://${SERVER_IP:-localhost}:9092,PLAINTEXT_INTERNAL://kafka:29092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://${SERVER_IP:-localhost}:9092,PLAINTEXT_INTERNAL://10.5.0.6:29092
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
@@ -34,20 +35,20 @@ services:
     command: |
       "
       # Blocks until Kafka is reachable
-      kafka-topics --bootstrap-server kafka:29092 --list
-      kafka-topics --bootstrap-server kafka:29092 --create --if-not-exists --topic requests-input  --replication-factor 1 --partitions 1
-      kafka-topics --bootstrap-server kafka:29092 --create --if-not-exists --topic requests-output --replication-factor 1 --partitions 1
+      kafka-topics --bootstrap-server 10.5.0.6:29092 --list
+      kafka-topics --bootstrap-server 10.5.0.6:29092 --create --if-not-exists --topic requests-input  --replication-factor 1 --partitions 1
+      kafka-topics --bootstrap-server 10.5.0.6:29092 --create --if-not-exists --topic requests-output --replication-factor 1 --partitions 1
       "
     networks:
       net_docker:
         ipv4_address: 10.5.0.7
 
-  ldap:
+  connector:
     image: ldap:latest
     entrypoint: [ '/root/bin/app' ]
     depends_on:
       - kafka
-    command: ["10.5.0.6", "9092", "312",  "administrator",  "5ecr3t"]
+    command: ["10.5.0.6", "29092", "10.5.0.12", "8080", "Administrator",  "5ecr3t"]
     networks:
       net_docker:
         ipv4_address: 10.5.0.8
@@ -84,28 +85,29 @@ services:
         ipv4_address: 10.5.0.10
     volumes:
       - pg-crm_data:/var/lib/postgresql/data
-      - ./book-chapter-common/container-book-postgres-crm_files:/docker-entrypoint-initdb.d/:ro
+      - ./container-book-postgres-crm_files:/docker-entrypoint-initdb.d/:ro
 
-  ad:
-    image: sonohara/samba4-ad-dc
+  ldap:
+    image: osixia/openldap:stable
     container_name: book-ldap-chapter-2
-    privileged: true
+    entrypoint: [ "/container/tool/run", "--copy-service" ]
+    ports:
+      - "10389:389"
+    environment:
+      - LDAP_DOMAIN=example.com
+      - LDAP_ADMIN_PASSWORD=secret
+      - LDAP_TLS=false
     networks:
       net_docker:
         ipv4_address: 10.5.0.11
-    ports:
-      - "389:389"
-    environment:
-      - DOCKER_DEBUG=1
-      - DNS_FORWARD=8.8.8.8
-      - DNS_DOMAIN=sambaad.local
-      - AD_PASSWORD=PASS0rd123
-      - AD_REALM=sambaad.local
-      - AD_DOMAIN=SAMBAAD
+    volumes:
+      - ldap_conf:/etc/ldap/slapd.d
+      - ldap_data:/var/lib/ldap
+      - ./container-book-ldap_files:/container/service/slapd/assets/config/bootstrap/ldif/custom/:ro
 
   midpoint:
-    image: evolveum/midpoint:${MP_VERSION:-4.4}-alpine
-#    image: sakazuki/midpoint:arm64
+    # image: evolveum/midpoint:${MP_VERSION:-4.2}-alpine
+    image: sakazuki/midpoint:arm64
     container_name: book-midpoint-chapter-2
     ports:
       - "8080:8080"
@@ -127,6 +129,7 @@ services:
       - midpoint_home:/opt/midpoint/var
       - ./container-book-midpoint_files:/opt/midpoint-dirs-docker-entrypoint/:ro
     depends_on:
+      - ldap
       - postgresql-crm
       - postgresql-midpoint
 
@@ -139,15 +142,11 @@ networks:
         - subnet: 10.5.0.0/16
           gateway: 10.5.0.1
 
-#networks:
-#  net:
-#    driver: bridge
-
 secrets:
   mp_database_password.txt:
-    file: ./database_password.txt
+    file: ./configs-and-secrets/database_password.txt
   mp_keystore_password.txt:
-    file: ./keystore_password.txt
+    file: ./configs-and-secrets/keystore_password.txt
 
 volumes:
   midpoint_home:

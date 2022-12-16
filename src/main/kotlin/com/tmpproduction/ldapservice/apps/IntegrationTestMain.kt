@@ -20,6 +20,7 @@ import org.apache.kafka.common.serialization.Serdes
 import org.apache.kafka.common.serialization.StringSerializer
 import org.apache.kafka.streams.StreamsConfig
 import java.util.*
+import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
 private val newUserFile = """
@@ -38,6 +39,8 @@ private val newUserFile = """
         <fullName>
             <orig xmlns="http://prism.evolveum.com/xml/ns/public/types-3">Жмышенко Валерий Альбертович</orig>
         </fullName>
+        <givenName>Жмых</givenName>
+    <familyName>Жмышенко</familyName>
         <credentials>
             <password>
                 <value>
@@ -69,8 +72,7 @@ private val connectToLdapFile = """
 class IntegrationTestMain {
 
     fun main(args: Array<String>) {
-        println("Dummy integration OK!")
-        return
+        println("Integration test start")
         val (kafkaHost, kafkaPort, midpointHost, midpointPort, userName, password) = args
         // curl --user administrator:5ecr3t -X POST http://localhost:8080/midpoint/ws/rest/users -H "Content-Type: application/xml" --data "@add_user.xml"
         // curl --user administrator:5ecr3t -X PATCH http://localhost:8080/midpoint/ws/rest/users/0e030e0c-a37d-47b2-bde8-f8e61e4a2bfb -H "Content-Type: application/xml" --data "@add_shadow.xml"
@@ -93,27 +95,33 @@ class IntegrationTestMain {
         val producer = KafkaProducer<String, String>(props)
         runBlocking {
             (HttpClient(CIO)).use { client ->
+                println("Creating midpoint user")
                 client.post("http://${midpointHost}:${midpointPort}/midpoint/ws/rest/users") {
                     basicAuth(userName, password)
                     contentType(ContentType.Application.Xml)
                     setBody(newUserFile)
                 }
+                println("Adding user to ldap")
                 client.patch("http://${midpointHost}:${midpointPort}/midpoint/ws/rest/users/0e030e0c-a37d-47b2-bde8-f8e61e4a2bfb") {
                     basicAuth(userName, password)
                     contentType(ContentType.Application.Xml)
                     setBody(connectToLdapFile)
                 }
+                println("Getting user shadows:")
                 val shadows = midpointRepository.getUserShadows("0e030e0c-a37d-47b2-bde8-f8e61e4a2bfb")
+                println(shadows)
                 if (shadows.size != 1) {
                     throw IllegalStateException("shadow was not created")
                 }
                 val actualShadow = shadows[0]
 
-                val newGroup = "ou=people,dc=example,dc=com"
-                val message = """{"name":"Жмышенко Валерий Альбертович", "newGroup":"${newGroup}"}"""
+                val newGroup = "ou=people,dc=example,dc=madeByTestIntegration"
+                val message = """{"name":"Жмышенко Валерий Альбертович", "newGroup":"$newGroup"}"""
                 val record = ProducerRecord(INPUT_TOPIC, "zhmih", message)
+                println("Sending request to Kafka")
                 producer.send(record)
                 delay(5.seconds)
+                println("Checking new user group")
                 val response = client.get("http://${midpointHost}:${midpointPort}/midpoint/ws/rest/shadows/${actualShadow}") {
                     basicAuth(userName, password)
                     accept(ContentType.Application.Json)
@@ -129,7 +137,7 @@ class IntegrationTestMain {
                     throw IllegalStateException("New group was not set")
                 }
             }
-
+            println("Test ok!")
         }
     }
 

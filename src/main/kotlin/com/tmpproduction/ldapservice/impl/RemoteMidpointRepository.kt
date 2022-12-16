@@ -51,7 +51,18 @@ class RemoteMidpointRepository(
     """.trimIndent()
 
     override suspend fun isAvailable(): Boolean {
-        TODO("Not yet implemented")
+        try {
+            (HttpClient(CIO)).use { client ->
+                client.get(usersEndPoint) {
+                    basicAuth(userName, password)
+                    contentType(ContentType.Application.Xml)
+                    accept(ContentType.Application.Json)
+                }
+            }
+        } catch (e: Exception) {
+            return false
+        }
+        return true
     }
 
     override suspend fun getUserByFullName(fullName: String): OID? {

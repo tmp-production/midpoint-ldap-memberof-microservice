@@ -1,6 +1,6 @@
 package com.tmpproduction.ldapservice
 
-import com.tmpproduction.ldapservice.stubs.SequenceProviderService
+import com.tmpproduction.ldapservice.impl.SequenceProviderService
 import com.tmpproduction.ldapservice.stubs.SimpleRepo
 import com.tmpproduction.ldapservice.stubs.UnavailableRepo
 import kotlinx.coroutines.runBlocking

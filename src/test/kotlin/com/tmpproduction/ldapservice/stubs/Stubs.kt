@@ -2,13 +2,6 @@ package com.tmpproduction.ldapservice.stubs
 
 import com.tmpproduction.ldapservice.MidpointRepository
 import com.tmpproduction.ldapservice.OID
-import com.tmpproduction.ldapservice.RequestsProviderService
-
-class SequenceProviderService(
-    private inline val task: MidpointRepository.() -> Unit
-) : RequestsProviderService {
-    override fun start(target: MidpointRepository) = task(target)
-}
 
 open class UnavailableRepo : MidpointRepository {
     override suspend fun isAvailable(): Boolean {

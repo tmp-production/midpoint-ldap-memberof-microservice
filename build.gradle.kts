@@ -72,5 +72,5 @@ tasks.withType<KotlinCompile> {
 }
 
 application {
-    mainClass.set("com.tmpproduction.ldapservice.apps.KafkaMainKt")
+    mainClass.set("com.tmpproduction.ldapservice.apps.EntryPointKt")
 }

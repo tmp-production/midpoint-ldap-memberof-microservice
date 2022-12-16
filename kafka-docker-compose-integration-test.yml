@@ -53,6 +53,15 @@ services:
       net_docker:
         ipv4_address: 10.5.0.8
 
+  integration-tester:
+    image: ldap:latest
+    entrypoint: [ '/root/bin/app' ]
+    depends_on:
+      - kafka
+    command: ["integration-test", "10.5.0.6", "29092", "10.5.0.12", "8080", "Administrator",  "5ecr3t"]
+    networks:
+      net_docker:
+        ipv4_address: 10.5.0.14
 
   postgresql-midpoint:
     image: postgres:13-alpine
@@ -106,8 +115,8 @@ services:
       - ./container-book-ldap_files:/container/service/slapd/assets/config/bootstrap/ldif/custom/:ro
 
   midpoint:
-    # image: evolveum/midpoint:${MP_VERSION:-4.2}-alpine
-    image: sakazuki/midpoint:arm64
+    image: evolveum/midpoint:${MP_VERSION:-4.4}-alpine
+#    image: sakazuki/midpoint:arm64
     container_name: book-midpoint-chapter-2
     ports:
       - "8080:8080"

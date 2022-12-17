@@ -1,9 +1,6 @@
 package com.tmpproduction.ldapservice.apps
 
-import com.tmpproduction.ldapservice.MidpointRepository
-import com.tmpproduction.ldapservice.impl.KafkaProviderService
 import com.tmpproduction.ldapservice.impl.RemoteMidpointRepository
-import com.tmpproduction.ldapservice.impl.SequenceProviderService
 import io.ktor.client.*
 import io.ktor.client.engine.cio.*
 import io.ktor.client.request.*
@@ -11,7 +8,9 @@ import io.ktor.client.statement.*
 import io.ktor.http.*
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
-import kotlinx.serialization.json.*
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import org.apache.kafka.clients.consumer.ConsumerConfig
 import org.apache.kafka.clients.producer.KafkaProducer
 import org.apache.kafka.clients.producer.ProducerConfig
@@ -20,7 +19,6 @@ import org.apache.kafka.common.serialization.Serdes
 import org.apache.kafka.common.serialization.StringSerializer
 import org.apache.kafka.streams.StreamsConfig
 import java.util.*
-import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
 private val newUserFile = """

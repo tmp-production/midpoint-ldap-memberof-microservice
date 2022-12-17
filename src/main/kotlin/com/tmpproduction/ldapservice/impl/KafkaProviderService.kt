@@ -1,5 +1,7 @@
 package com.tmpproduction.ldapservice.impl
 
+import com.tmpproduction.ldapservice.MidpointRepository
+import com.tmpproduction.ldapservice.RequestsProviderService
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.decodeFromString
@@ -13,8 +15,6 @@ import org.apache.kafka.common.serialization.StringSerializer
 import org.apache.kafka.streams.KafkaStreams
 import org.apache.kafka.streams.StreamsBuilder
 import org.apache.kafka.streams.StreamsConfig
-import com.tmpproduction.ldapservice.MidpointRepository
-import com.tmpproduction.ldapservice.RequestsProviderService
 import java.util.*
 import java.util.concurrent.CountDownLatch
 import kotlin.system.exitProcess

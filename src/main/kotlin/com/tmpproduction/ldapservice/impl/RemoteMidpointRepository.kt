@@ -1,14 +1,14 @@
 package com.tmpproduction.ldapservice.impl
 
+import com.tmpproduction.ldapservice.MidpointRepository
+import com.tmpproduction.ldapservice.OID
 import io.ktor.client.*
 import io.ktor.client.engine.cio.*
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
-import kotlinx.serialization.json.*
-import com.tmpproduction.ldapservice.MidpointRepository
-import com.tmpproduction.ldapservice.OID
 import kotlinx.serialization.SerializationException
+import kotlinx.serialization.json.*
 
 class RemoteMidpointRepository(
     private val host: String,

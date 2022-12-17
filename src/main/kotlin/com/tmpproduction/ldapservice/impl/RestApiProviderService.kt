@@ -1,5 +1,8 @@
 package com.tmpproduction.ldapservice.impl
 
+import com.tmpproduction.ldapservice.MidpointRepository
+import com.tmpproduction.ldapservice.OID
+import com.tmpproduction.ldapservice.RequestsProviderService
 import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.application.*
 import io.ktor.server.engine.*
@@ -10,9 +13,6 @@ import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
-import com.tmpproduction.ldapservice.MidpointRepository
-import com.tmpproduction.ldapservice.OID
-import com.tmpproduction.ldapservice.RequestsProviderService
 
 @Serializable
 private data class UserShadowsRequestInfo(val userId: String)

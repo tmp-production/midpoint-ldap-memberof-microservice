@@ -65,6 +65,7 @@ dependencies {
     implementation("org.junit.jupiter:junit-jupiter:5.8.1")
 
     testImplementation(kotlin("test"))
+    testImplementation("io.mockk:mockk:1.13.2")
 }
 
 tasks.withType<KotlinCompile> {

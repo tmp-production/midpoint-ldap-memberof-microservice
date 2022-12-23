@@ -24,6 +24,8 @@ open class UnavailableRepo : MidpointRepository {
         throw NotImplementedError()
     }
 
+    override fun close() = Unit
+
 }
 
 /**
@@ -65,5 +67,7 @@ class SimpleRepo(
             throw IllegalArgumentException()
         }
     }
+
+    override fun close() = Unit
 
 }

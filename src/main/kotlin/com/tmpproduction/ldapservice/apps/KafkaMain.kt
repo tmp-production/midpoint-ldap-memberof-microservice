@@ -3,6 +3,8 @@ package com.tmpproduction.ldapservice.apps
 import com.tmpproduction.ldapservice.MemberOfService
 import com.tmpproduction.ldapservice.impl.KafkaProviderService
 import com.tmpproduction.ldapservice.impl.RemoteMidpointRepository
+import io.ktor.client.*
+import io.ktor.client.engine.cio.*
 
 class KafkaMain {
 
@@ -23,10 +25,13 @@ class KafkaMain {
         val service = MemberOfService(
             requestsProviderService = KafkaProviderService(kafkaHost, kafkaPort.toInt()),
             midpointStateProvider = RemoteMidpointRepository(
-                midpointHost,
-                midpointPort.toInt(),
-                userName,
-                password
+                RemoteMidpointRepository.Config(
+                    midpointHost,
+                    midpointPort.toInt(),
+                    userName,
+                    password
+                ),
+                HttpClient(CIO)
             )
         )
         service.start()

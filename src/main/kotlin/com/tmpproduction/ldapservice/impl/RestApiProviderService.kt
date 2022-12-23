@@ -61,4 +61,7 @@ class RestApiProviderService(private val port: Int) : RequestsProviderService {
             }
         }.start(wait = true)
     }
+
+    override fun close() {
+    }
 }

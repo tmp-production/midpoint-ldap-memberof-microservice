@@ -75,7 +75,8 @@ class IntegrationTestMain {
         // curl --user administrator:5ecr3t -X POST http://localhost:8080/midpoint/ws/rest/users -H "Content-Type: application/xml" --data "@add_user.xml"
         // curl --user administrator:5ecr3t -X PATCH http://localhost:8080/midpoint/ws/rest/users/0e030e0c-a37d-47b2-bde8-f8e61e4a2bfb -H "Content-Type: application/xml" --data "@add_shadow.xml"
         // curl --user administrator:5ecr3t -H "Accept: application/json" -X GET http://localhost:8080/midpoint/ws/rest/shadows/699a2edd-a855-4d90-ad7c-1ec42699cbee
-        val midpointRepository = RemoteMidpointRepository(midpointHost, midpointPort.toInt(), userName, password)
+        val config = RemoteMidpointRepository.Config(midpointHost, midpointPort.toInt(), userName, password)
+        val midpointRepository = RemoteMidpointRepository(config, HttpClient(CIO))
 
         // wait until midpoint is alive
         runBlocking {

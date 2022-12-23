@@ -35,6 +35,10 @@ sonarqube {
             "sonar.coverage.jacoco.xmlReportPaths",
             "build/jacocoReport/test/jacocoTestReport.xml"
         )
+        property(
+            "sonar.coverage.exclusions",
+            "src/main/kotlin/com/tmpproduction/ldapservice/apps/*"
+        )
     }
 }
 
@@ -66,6 +70,9 @@ dependencies {
 
     testImplementation(kotlin("test"))
     testImplementation("io.mockk:mockk:1.13.2")
+    testImplementation("io.ktor:ktor-client-mock:2.1.3")
+    testImplementation("io.ktor:ktor-server-test-host:2.1.3")
+    testImplementation("org.jetbrains.kotlin:kotlin-test:1.7.20")
 }
 
 tasks.withType<KotlinCompile> {

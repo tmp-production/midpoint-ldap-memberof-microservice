@@ -7,4 +7,5 @@ class SequenceProviderService(
     private inline val task: MidpointRepository.() -> Unit
 ) : RequestsProviderService {
     override fun start(target: MidpointRepository) = task(target)
+    override fun close() = Unit
 }

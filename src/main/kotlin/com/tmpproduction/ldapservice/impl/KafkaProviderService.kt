@@ -57,8 +57,7 @@ class KafkaProviderService(
         exitProcess(0)
     }
 
-    override fun close() {
-    }
+    override fun close() = Unit
 
     private lateinit var producer: KafkaProducer<String, String>
 

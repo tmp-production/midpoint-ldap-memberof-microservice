@@ -1,5 +1,7 @@
 package com.tmpproduction.ldapservice
 
+import java.io.Closeable
+
 typealias OID = String
 
 class AuthenticationError(msg: String) : RuntimeException(msg)
@@ -17,7 +19,7 @@ class MemberOfService(
 /**
  * Provider which can get state from midpoint
  */
-interface MidpointRepository {
+interface MidpointRepository : Closeable {
     /**
      * @throws AuthenticationError if service is available, but credentials are bad
      */
@@ -32,6 +34,6 @@ interface MidpointRepository {
  * A service which handles requests in any form and uses ru.nsu.fit.ldap.MemberOfService
  * to respond to them
  */
-interface RequestsProviderService {
+interface RequestsProviderService : Closeable {
     fun start(target: MidpointRepository)
 }

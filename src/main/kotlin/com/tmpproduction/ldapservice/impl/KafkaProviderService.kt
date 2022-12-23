@@ -57,6 +57,8 @@ class KafkaProviderService(
         exitProcess(0)
     }
 
+    override fun close() = Unit
+
     private lateinit var producer: KafkaProducer<String, String>
 
     private fun getStreamsConfig(): Properties {

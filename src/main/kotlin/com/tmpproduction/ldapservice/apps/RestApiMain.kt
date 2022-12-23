@@ -3,6 +3,8 @@ package com.tmpproduction.ldapservice.apps
 import com.tmpproduction.ldapservice.MemberOfService
 import com.tmpproduction.ldapservice.impl.RemoteMidpointRepository
 import com.tmpproduction.ldapservice.impl.RestApiProviderService
+import io.ktor.client.*
+import io.ktor.client.engine.cio.*
 
 class RestApiMain {
 
@@ -22,10 +24,13 @@ class RestApiMain {
         val service = MemberOfService(
             requestsProviderService = RestApiProviderService(port.toInt()),
             midpointStateProvider = RemoteMidpointRepository(
-                midpointHost,
-                midpointPort.toInt(),
-                userName,
-                password
+                RemoteMidpointRepository.Config(
+                    midpointHost,
+                    midpointPort.toInt(),
+                    userName,
+                    password
+                ),
+                HttpClient(CIO)
             )
         )
         service.start()

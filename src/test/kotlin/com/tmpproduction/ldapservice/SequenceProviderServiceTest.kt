@@ -40,6 +40,7 @@ class SequenceProviderServiceTest {
                 shadowBelongsToLDAP(any())
             }
         }
+        sequenceProviderService.close()
     }
 
 }

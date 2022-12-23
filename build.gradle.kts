@@ -39,6 +39,10 @@ sonarqube {
             "sonar.coverage.exclusions",
             "src/main/kotlin/com/tmpproduction/ldapservice/apps/*"
         )
+        property(
+            "sonar.coverage.exclusions",
+            "src/main/kotlin/com/tmpproduction/ldapservice/impl/RestApiProviderServiceKt.class"
+        )
     }
 }
 
